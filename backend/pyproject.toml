@@ -12,3 +12,19 @@ dev = [
     "pytest>=9.2.0",
     "ruff>=0.17.6",
 ]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+# E/F: para errores básicos
+# I: para orden de imports
+# B: bugs comunes
+# UP: sintaxis moderna de Python
+# SIM: simplificaciones
+# ASYNC: errores típicos con async
+select = ["E", "F", "I", "B", "UP", "SIM", "ASYNC"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
