@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { enviarMensajeStream, type ChatRespuesta } from "./api";
 import Markdown from "react-markdown";
+import { escuchar, hayMicrofono, hayVoz, Locutor } from "./voz";
 
 type Mensaje = { autor: "empleado" | "asistente"; texto: string; detalle?: ChatRespuesta };
 
@@ -18,6 +19,10 @@ export default function App() {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pasoActual, setPasoActual] = useState<string | null>(null);
+  const [vozActiva, setVozActiva] = useState(false);
+  const [escuchando, setEscuchando] = useState(false);
+  const [locutor] = useState(() => new Locutor());
+  const detenerMicrofono = useRef<(() => void) | null>(null);
   const finRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -25,6 +30,7 @@ export default function App() {
   }, [mensajes, cargando]);
 
   function nuevaConversacion() {
+    locutor.callar();
     setSesionId(null);
     setMensajes([]);
     setError(null);
@@ -33,6 +39,8 @@ export default function App() {
   async function enviar(contenido: string) {
     const limpio = contenido.trim();
     if (!limpio || cargando) return;
+    // Una pregunta nueva interrumpe lo que el agente estuviera diciendo
+    locutor.iniciar();
     // La burbuja del asistente empieza vacía y se va llenando con cada pedazo del stream
     setMensajes((previos) => [
       ...previos,
@@ -46,10 +54,12 @@ export default function App() {
       for await (const evento of enviarMensajeStream(limpio, empleadoId, sesionId)) {
         if (evento.tipo === "texto") {
           actualizarUltimo((m) => ({ ...m, texto: m.texto + evento.datos.texto }));
+          if (vozActiva) locutor.agregar(evento.datos.texto);
         } else if (evento.tipo === "paso") {
           setPasoActual(evento.datos.herramienta);
         } else if (evento.tipo === "fin") {
           setSesionId(evento.datos.sesion_id);
+          if (vozActiva) locutor.terminar(evento.datos.respuesta);
           actualizarUltimo(() => ({
             autor: "asistente",
             texto: evento.datos.respuesta,
@@ -72,6 +82,32 @@ export default function App() {
     setMensajes((previos) => [...previos.slice(0, -1), cambio(previos[previos.length - 1])]);
   }
 
+  function alternarMicrofono() {
+    // Presionarlo otra vez lo detiene y manda lo que se dijo
+    if (escuchando) {
+      detenerMicrofono.current?.();
+      return;
+    }
+    // Hablar mientras el agente responde lo interrumpe
+    locutor.callar();
+    setError(null);
+    setEscuchando(true);
+    detenerMicrofono.current = escuchar(
+      (dicho) => setTexto(dicho),
+      (final) => {
+        setEscuchando(false);
+        detenerMicrofono.current = null;
+        if (final) void enviar(final);
+      },
+      (mensaje) => setError(mensaje),
+    );
+  }
+
+  function alternarVoz() {
+    if (vozActiva) locutor.callar();
+    setVozActiva(!vozActiva);
+  }
+
   return (
     <div className="flex h-dvh flex-col bg-slate-50 text-slate-800">
       <header className="border-b border-slate-200 bg-white">
@@ -90,6 +126,17 @@ export default function App() {
               aria-label="Número de empleado"
               className="w-28 rounded-lg border border-slate-300 px-2 py-1 text-sm"
             />
+            {hayVoz && (
+              <button
+                type="button"
+                onClick={alternarVoz}
+                aria-pressed={vozActiva}
+                title={vozActiva ? "Dejar de leer las respuestas en voz alta" : "Leer las respuestas en voz alta"}
+                className={`rounded-lg px-2 py-1 text-sm hover:bg-slate-100 ${vozActiva ? "text-slate-900" : "text-slate-400"}`}
+              >
+                {vozActiva ? "Voz activada" : "Voz apagada"}
+              </button>
+            )}
             <button
               type="button"
               onClick={nuevaConversacion}
@@ -161,10 +208,22 @@ export default function App() {
           <input
             value={texto}
             onChange={(e) => setTexto(e.target.value)}
-            placeholder="Escribe tu duda"
+            placeholder={escuchando ? "Te escucho…" : "Escribe tu duda"}
             maxLength={2000}
             className="flex-1 rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-slate-500"
           />
+          {hayMicrofono && (
+            <button
+              type="button"
+              onClick={alternarMicrofono}
+              disabled={cargando}
+              aria-pressed={escuchando}
+              title={escuchando ? "Dejar de escuchar" : "Hablar"}
+              className={`rounded-xl px-3 py-2 text-sm disabled:opacity-40 ${escuchando ? "animate-pulse bg-red-600 text-white" : "border border-slate-300 hover:bg-slate-100"}`}
+            >
+              {escuchando ? "Escuchando…" : "Hablar"}
+            </button>
+          )}
           <button
             type="submit"
             disabled={cargando || !texto.trim()}

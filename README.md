@@ -19,6 +19,8 @@ El agente
 
 Tiene una interfaz web sencilla en `frontend/` hecha con React y Tailwind que muestra la respuesta en streaming conforme el modelo la escribe, con formato, las fuentes, el folio y la traza
 
+**Voz:** con el botón Hablar le puedes hacer la pregunta con tu voz y con Voz activada el agente lee la respuesta en voz alta mientras llega del stream, oración por oración, sin leer el markdown ni las citas. Si hablas o mandas otra pregunta mientras está hablando se calla de inmediato. Usa las APIs de voz del navegador, así que no necesita otra API key y funciona en Chrome y Edge
+
 **Pregunta sobre aguinaldo,** responde citando el reglamento y la LFT y abajo muestra los artículos que encontró la búsqueda y la traza
 
 ![Respuesta sobre aguinaldo con fuentes y traza](docs/img/chat-aguinaldo.png)
@@ -114,6 +116,7 @@ curl -N -X POST http://localhost:8000/api/v1/chat/stream -H "Content-Type: appli
 - Cuando la pregunta es de vacaciones a veces el modelo solo usa `calcular_vacaciones` y no `buscar_politicas`, la respuesta sale bien porque la herramienta ya trae su fundamento pero no aparecen fuentes en la traza, se podría reforzar en el prompt o con una evaluación
 - El modelo local de embeddings funciona mejor en inglés, por eso la búsqueda es híbrida y BM25 lo compensa, lo ideal sería cambiar a embeddings multilingües
 - Los tickets se guardan en un archivo JSONL que simula la API de RRHH, en producción se mandarían al sistema de tickets real
+- La voz usa el reconocimiento y la síntesis del navegador, Firefox no tiene reconocimiento de voz y ahí se oculta el micrófono, en Chrome el audio se procesa en servidores de Google y es por turnos, no en tiempo real como Gemini Live API que sería el siguiente paso
 - Por tiempo quedaron pendientes Docker Compose, una evaluación automática del RAG con preguntas y su artículo esperado, autenticación y pruebas del frontend
 
 ## 6. Costo y latencia
