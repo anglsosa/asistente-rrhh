@@ -28,7 +28,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.agente = AgenteADK(settings, indice, RegistroTickets(settings.tickets_path))
     logger.info("Índice y agente listos (modelo %s)", settings.gemini_modelo)
     yield
-    yield
     # despues del yield se cierra todo y se apaga el servidor
 
 

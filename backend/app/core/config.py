@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     chroma_dir: Path = RAIZ_PROYECTO / "data" / "chroma"
     tickets_path: Path = RAIZ_PROYECTO / "data" / "tickets.jsonl"
     google_api_key: SecretStr | None = Field(default=None, validation_alias="GOOGLE_API_KEY")
-    gemini_modelo: str = "gemini-2.5-flash"
+    gemini_modelo: str = "gemini-3.5-flash"
     gemini_temperatura: float = Field(default=0.2, ge=0, le=2)
     gemini_max_tokens: int = Field(default=1024, ge=128, le=8192)
     prompt_version: str = "v1"
