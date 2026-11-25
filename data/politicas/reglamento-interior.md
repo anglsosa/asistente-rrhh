@@ -49,7 +49,7 @@ La asistencia se registra en el portal interno al iniciar y al terminar la jorna
 La ausencia de un día sin permiso ni justificante es una falta injustificada y no se paga. Las faltas se justifican con permiso autorizado (Capítulo VII) o con incapacidad del IMSS (Artículo 33).
 
 ### Artículo 14. Horas extra
-Las horas extra solo se trabajan con autorización previa y por escrito del jefe inmediato. Conforme a los artículos 66 a 68 de la LFT, no pueden exceder de 3 horas diarias ni de 3 veces por semana; se pagan con un 100 % adicional y las que excedan de 9 horas a la semana, con un 200 % adicional.
+Las horas extra solo se trabajan con autorización previa y por escrito del jefe inmediato. Conforme al artículo 66 de la LFT, el tiempo extraordinario no puede exceder de 12 horas a la semana, distribuidas en hasta 4 horas diarias en un máximo de 4 días, y se paga con un 100 % más del salario de las horas ordinarias. Conforme al artículo 68 de la LFT, el tiempo que exceda ese límite no puede ser mayor de 4 horas a la semana y se paga con un 200 % más; la suma de la jornada ordinaria y la extraordinaria nunca puede ser mayor a 12 horas diarias.
 
 ## Capítulo IV · Trabajo a distancia
 
