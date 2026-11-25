@@ -1,6 +1,9 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+RAIZ_PROYECTO = Path(__file__).resolve().parents[3]
 
 
 class Settings(BaseSettings):
@@ -18,6 +21,8 @@ class Settings(BaseSettings):
     name: str = "Asistente de politicas de RRHH"
     version: str = "0.1.0"
     environment: str = "development"
+    data_dir: Path = RAIZ_PROYECTO / "data" / "politicas"
+    chroma_dir: Path = RAIZ_PROYECTO / "data" / "chroma"
 
 
 @lru_cache
