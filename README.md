@@ -17,7 +17,7 @@ El agente
 - Escala a RRHH con un folio los temas delicados como acoso, despido o salud, y también lo que no encuentra en los documentos
 - Recuerda lo que el empleado ya dijo en la conversación y regresa la traza con las herramientas que usó, sus argumentos y las fuentes
 
-Tiene una interfaz web sencilla en `frontend/` hecha con React y Tailwind que muestra la respuesta con formato, las fuentes, el folio y la traza
+Tiene una interfaz web sencilla en `frontend/` hecha con React y Tailwind que muestra la respuesta en streaming conforme el modelo la escribe, con formato, las fuentes, el folio y la traza
 
 ### Arquitectura
 
@@ -84,6 +84,13 @@ curl -s -X POST http://localhost:8000/api/v1/chat -H "Content-Type: application/
 
 Para seguir la misma conversación hay que mandar también el `sesion_id` que regresó la respuesta anterior, la interfaz ya lo hace sola
 
+También hay una versión en streaming con Server-Sent Events, que es la que usa la interfaz, manda eventos `paso` cuando el agente usa una herramienta, `texto` con cada pedazo de la respuesta, `fin` con la respuesta completa y su traza, y `error` si algo falla
+
+```bash
+curl -N -X POST http://localhost:8000/api/v1/chat/stream -H "Content-Type: application/json" \
+  -d '{"mensaje": "¿Cuántos días de aguinaldo me dan y cuándo?", "empleado_id": "EMP-0042"}'
+```
+
 | # | Pregunta | Qué debe pasar |
 |---|---|---|
 | 1 | Tengo 3 años en la empresa, ¿cuántos días de vacaciones me tocan? | 16 días y prima del 30 %, citando el Art. 21 del reglamento y el 76 de la LFT |
@@ -99,7 +106,7 @@ Para seguir la misma conversación hay que mandar también el `sesion_id` que re
 - Cuando la pregunta es de vacaciones a veces el modelo solo usa `calcular_vacaciones` y no `buscar_politicas`, la respuesta sale bien porque la herramienta ya trae su fundamento pero no aparecen fuentes en la traza, se podría reforzar en el prompt o con una evaluación
 - El modelo local de embeddings funciona mejor en inglés, por eso la búsqueda es híbrida y BM25 lo compensa, lo ideal sería cambiar a embeddings multilingües
 - Los tickets se guardan en un archivo JSONL que simula la API de RRHH, en producción se mandarían al sistema de tickets real
-- Por tiempo quedaron pendientes Docker Compose, una evaluación automática del RAG con preguntas y su artículo esperado, autenticación, streaming de la respuesta y pruebas del frontend
+- Por tiempo quedaron pendientes Docker Compose, una evaluación automática del RAG con preguntas y su artículo esperado, autenticación y pruebas del frontend
 
 ## 6. Costo y latencia
 
