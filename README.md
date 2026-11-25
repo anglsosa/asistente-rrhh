@@ -19,6 +19,14 @@ El agente
 
 Tiene una interfaz web sencilla en `frontend/` hecha con React y Tailwind que muestra la respuesta en streaming conforme el modelo la escribe, con formato, las fuentes, el folio y la traza
 
+**Pregunta sobre aguinaldo,** responde citando el reglamento y la LFT y abajo muestra los artículos que encontró la búsqueda y la traza
+
+![Respuesta sobre aguinaldo con fuentes y traza](docs/img/chat-aguinaldo.png)
+
+**Escalamiento a RRHH,** cuando el empleado habla de renunciar y luego pregunta por su liquidación el agente no inventa montos, cita los artículos 62 y 64 del reglamento y crea un ticket con folio, y en la misma sesión recuerda el contexto de la conversación
+
+![Escalamiento a RRHH con folio en una conversación de dos turnos](docs/img/chat-escalamiento.png)
+
 ### Arquitectura
 
 ```mermaid
@@ -113,6 +121,7 @@ curl -N -X POST http://localhost:8000/api/v1/chat/stream -H "Content-Type: appli
 - **Costo:** con la capa gratuita de Gemini es $0, cada consulta hace entre 2 y 3 llamadas al modelo (decidir qué herramienta usar, usarla y responder), y con un plan de pago el costo sale de los tokens de esas llamadas por la tarifa vigente de Gemini Flash
 - **Latencia:** cada respuesta trae `duracion_ms` y se ve en la traza de la interfaz, en mis pruebas tardó entre 8 y 17 segundos y una vez pasó de 45 porque la capa gratuita iba lenta, por eso bajé el nivel de razonamiento de Gemini a LOW y recomiendo subir el timeout a 90 segundos
 - Si se pasa del timeout la API responde 504 con un mensaje claro y la interfaz lo muestra, no se queda colgada
+- La capa gratuita tiene un límite diario de solicitudes por modelo (20 al día para gemini-3.5-flash en mis pruebas) y cada consulta usa entre 2 y 3, si se acaba la API responde 429 con un mensaje claro y se puede cambiar a otro modelo que tiene su propia cuota con `APP_GEMINI_MODELO=gemini-3.5-flash-lite` sin tocar código
 
 ## Herramientas de IA que usé
 
