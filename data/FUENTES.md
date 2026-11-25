@@ -8,4 +8,4 @@
 
 - La empresa «Servicios Ejemplo S.A. de C.V.» no existe.
 - No hay datos personales reales en ningún archivo.
-- Los extractos de la LFT son resúmenes; la referencia válida es el texto oficial.
+- Los extractos de la LFT son texto literal del documento oficial (última reforma consultada: DOF 14-05-2026). Se omitieron encabezados de página y notas de reforma; los títulos de cada artículo se agregaron para facilitar la búsqueda.
