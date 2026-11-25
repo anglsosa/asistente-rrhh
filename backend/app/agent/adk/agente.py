@@ -34,6 +34,7 @@ class AgenteADK:
             generate_content_config=types.GenerateContentConfig(
                 temperature=settings.gemini_temperatura,
                 max_output_tokens=settings.gemini_max_tokens,
+                thinking_config=types.ThinkingConfig(thinking_level=types.ThinkingLevel.LOW),
             ),
         )
         self._sesiones = InMemorySessionService()
