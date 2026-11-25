@@ -12,7 +12,7 @@ class IndicePoliticas:
     def __init__(self, directorio: Path) -> None:
         cliente = chromadb.PersistentClient(path=str(directorio))
         self._coleccion = cliente.get_or_create_collection("politicas")
-        self._fragmentos = dict[str, Fragmento] = {}
+        self._fragmentos: dict[str, Fragmento] = {}
         self._bm25: BM25Okapi | None = None
         self._ids: list[str] = []
 
@@ -28,7 +28,7 @@ class IndicePoliticas:
 
         self._coleccion.upsert(
             ids=list(self._fragmentos),
-            documents=[f.text for f in fragmentos],
+            documents=[f.texto for f in fragmentos],
             metadatas=[{"documento": f.documento, "articulo": f.articulo} for f in fragmentos],
         )
 
