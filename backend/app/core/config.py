@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 RAIZ_PROYECTO = Path(__file__).resolve().parents[3]
@@ -24,6 +25,12 @@ class Settings(BaseSettings):
     data_dir: Path = RAIZ_PROYECTO / "data" / "politicas"
     chroma_dir: Path = RAIZ_PROYECTO / "data" / "chroma"
     tickets_path: Path = RAIZ_PROYECTO / "data" / "tickets.jsonl"
+    google_api_key: SecretStr | None = Field(default=None, validation_alias="GOOGLE_API_KEY")
+    gemini_modelo: str = "gemini-3.5-flash"
+    gemini_temperatura: float = Field(default=0.2, ge=0, le=2)
+    gemini_max_tokens: int = Field(default=1024, ge=128, le=8192)
+    prompt_version: str = "v1"
+    timeout_agente_seg: float = Field(default=45, gt=0)
 
 
 @lru_cache
