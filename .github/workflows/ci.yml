@@ -30,7 +30,8 @@ jobs:
 
             - name: Pruebas
               run: uv run pytest -q
-      frontend:
+
+    frontend:
         name: Frontend lint y build
         runs-on: ubuntu-latest
         defaults:
@@ -45,6 +46,11 @@ jobs:
                   cache: npm
                   cache-dependency-path: frontend/package-lock.json
 
-            - run: npm ci
-            - run: npm run lint
-            - run: npm run build
+            - name: Instala dependencias exactas del lock
+              run: npm ci
+
+            - name: Lint
+              run: npm run lint
+
+            - name: Build
+              run: npm run build
