@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     environment: str = "development"
     data_dir: Path = RAIZ_PROYECTO / "data" / "politicas"
     chroma_dir: Path = RAIZ_PROYECTO / "data" / "chroma"
+    tickets_path: Path = RAIZ_PROYECTO / "data" / "tickets.jsonl"
 
 
 @lru_cache
