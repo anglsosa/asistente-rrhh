@@ -21,3 +21,5 @@ data/chroma/
 
 #vscode
 .vscode/
+
+data/tickets.jsonl
