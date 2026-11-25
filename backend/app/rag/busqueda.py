@@ -1,3 +1,19 @@
+import re
+import unicodedata
+
+
+def tokenizar(texto: str) -> list[str]:
+    """
+    Minusculas, sin acentos y solo palabras
+    '¿Cuántos días?' -> ['cuantos', 'dias']
+    """
+
+    # NFD separa las letras de sus acentos y después se filtra
+    normalizado = unicodedata.normalize("NFD", texto.lower())
+    sin_acentos = "".join(c for c in normalizado if unicodedata.category(c) != "Mn")
+    return re.findall(r"\w+", sin_acentos)
+
+
 def fusionar_rrf(rankings: list[list[str]], k: int = 60) -> list[tuple[str, float]]:
     """
     RRF = Reciprocal Rank Fusion: une varias listas ordenadas en una sin normalizar puntajes

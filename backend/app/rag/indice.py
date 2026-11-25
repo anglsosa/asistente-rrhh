@@ -1,8 +1,9 @@
 from pathlib import Path
 
 import chromadb
+from rank_bm25 import BM25Okapi
 
-from app.rag.busqueda import fusionar_rrf
+from app.rag.busqueda import fusionar_rrf, tokenizar
 from app.rag.fragmentos import Fragmento, cargar_documentos
 from app.schemas.politicas import ResultadoBusqueda
 
@@ -12,6 +13,8 @@ class IndicePoliticas:
         cliente = chromadb.PersistentClient(path=str(directorio))
         self._coleccion = cliente.get_or_create_collection("politicas")
         self._fragmentos = dict[str, Fragmento] = {}
+        self._bm25: BM25Okapi | None = None
+        self._ids: list[str] = []
 
     def indexar(self, fragmentos: list[Fragmento]) -> int:
         """
@@ -33,6 +36,9 @@ class IndicePoliticas:
         if sobrantes:
             self._coleccion.delete(ids=list(sobrantes))
 
+        self._ids = list(self._fragmentos)
+        self._bm25 = BM25Okapi([tokenizar(f.texto) for f in fragmentos])
+
         return len(fragmentos)
 
     def buscar(self, pregunta: str, k: int = 3) -> list[ResultadoBusqueda]:
@@ -41,13 +47,21 @@ class IndicePoliticas:
         """
         candidatos = max(k * 3, 10)
         por_significado = self._buscar_por_significado(pregunta, candidatos)
-        fusion = fusionar_rrf([por_significado])[:k]
+        por_palabras = self._buscar_por_palabras(pregunta, candidatos)
+        fusion = fusionar_rrf([por_significado, por_palabras])[:k]
         return [self._resultado(doc_id, puntaje) for doc_id, puntaje in fusion]
 
     def _buscar_por_significado(self, pregunta: str, n: int) -> list[str]:
         n = min(n, self._coleccion.count())
         respuesta = self._coleccion.query(query_texts=[pregunta], n_results=n)
         return [doc_id for doc_id in respuesta["ids"][0] if doc_id in self._fragmentos]
+
+    def _buscar_por_palabras(self, pregunta: str, n: int) -> list[str]:
+        if self._bm25 is None:
+            raise RuntimeError("El índice no se ha construido: llama a indexar() primero")
+        puntajes = self._bm25.get_scores(tokenizar(pregunta))
+        orden = sorted(range(len(self._ids)), key=lambda i: puntajes[i], reverse=True)
+        return [self._ids[i] for i in orden[:n] if puntajes[i] > 0]
 
     def _resultado(self, doc_id: str, puntaje: float) -> ResultadoBusqueda:
         f = self._fragmentos[doc_id]
