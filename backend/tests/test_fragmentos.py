@@ -33,3 +33,16 @@ def test_reconoce_articulos_con_sufijo() -> None:
     fragmentos = partir_por_articulo(texto, "lft")
 
     assert [f.id for f in fragmentos] == ["lft#art-170-bis", "lft#art-330-e"]
+
+
+def test_el_encabezado_de_capitulo_no_se_pega_al_articulo_anterior() -> None:
+    texto = (
+        "### Artículo 1. Uno\nTexto uno.\n\n"
+        "## Capítulo II · Otro\n\n"
+        "### Artículo 2. Dos\nTexto dos."
+    )
+
+    fragmentos = partir_por_articulo(texto, "doc")
+
+    assert "Capítulo II" not in fragmentos[0].texto
+    assert fragmentos[0].texto.endswith("Texto uno.")

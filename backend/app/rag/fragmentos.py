@@ -39,6 +39,8 @@ def partir_por_articulo(contenido: str, documento: str) -> list[Fragmento]:
     for i, encabezado in enumerate(encabezados):
         fin = encabezados[i + 1].start() if i + 1 < len(encabezados) else len(contenido)
         cuerpo = contenido[encabezado.end() : fin].strip()
+        cuerpo = re.split(r"^##\s", cuerpo, maxsplit=1, flags=re.MULTILINE)[0].strip()
+
         articulo, titulo = encabezado.group(1), encabezado.group(2).strip()
         numero = articulo.removeprefix("Artículo").strip().replace(" ", "-").lower()
         fragmentos.append(
