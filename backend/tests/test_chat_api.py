@@ -1,3 +1,5 @@
+from collections.abc import AsyncIterator
+
 from fastapi import status
 from fastapi.testclient import TestClient
 
@@ -5,7 +7,7 @@ from app.agent.errores import LimiteDeConsultas
 from app.agent.prompt import cargar_prompt
 from app.api.chat import get_agente
 from app.main import create_app
-from app.schemas.chat import ChatRespuesta, PasoTraza
+from app.schemas.chat import ChatRespuesta, EventoAgente, FragmentoTexto, PasoTraza
 
 MENSAJE = {"mensaje": "¿Cuántos días de vacaciones me tocan?", "empleado_id": "EMP-0042"}
 
@@ -25,6 +27,17 @@ class AgenteFalso:
         return ChatRespuesta(
             sesion_id=sesion_id, respuesta="16 días.", fuentes=[], traza=[paso], duracion_ms=5
         )
+
+    async def responder_stream(
+        self, *, sesion_id: str, empleado_id: str, mensaje: str
+    ) -> AsyncIterator[EventoAgente]:
+        respuesta = await self.responder(
+            sesion_id=sesion_id, empleado_id=empleado_id, mensaje=mensaje
+        )
+        yield respuesta.traza[0]
+        yield FragmentoTexto(texto="16 ")
+        yield FragmentoTexto(texto="días.")
+        yield respuesta
 
 
 def cliente(agente: AgenteFalso) -> TestClient:
@@ -72,3 +85,20 @@ def test_el_prompt_nombra_sus_herramientas_y_no_tiene_llaves() -> None:
     for herramienta in ("buscar_politicas", "calcular_vacaciones", "escalar_a_rrhh"):
         assert herramienta in prompt
     assert "{" not in prompt
+
+
+def test_stream_manda_pasos_texto_y_fin() -> None:
+    response = cliente(AgenteFalso()).post("/api/v1/chat/stream", json=MENSAJE)
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.headers["content-type"].startswith("text/event-stream")
+    eventos = [linea for linea in response.text.splitlines() if linea.startswith("event:")]
+    assert eventos == ["event: paso", "event: texto", "event: texto", "event: fin"]
+
+
+def test_stream_manda_los_errores_como_evento() -> None:
+    response = cliente(AgenteFalso(LimiteDeConsultas())).post("/api/v1/chat/stream", json=MENSAJE)
+
+    assert response.status_code == status.HTTP_200_OK
+    assert "event: error" in response.text
+    assert '"status": 429' in response.text

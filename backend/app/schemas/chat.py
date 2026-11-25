@@ -36,3 +36,14 @@ class ChatRespuesta(BaseModel):
     traza: list[PasoTraza]
     folio_escalamiento: str | None = None
     duracion_ms: int
+
+
+class FragmentoTexto(BaseModel):
+    """
+    Un pedazo de la respuesta mientras el modelo la va escribiendo
+    """
+
+    texto: str
+
+
+EventoAgente = FragmentoTexto | PasoTraza | ChatRespuesta
