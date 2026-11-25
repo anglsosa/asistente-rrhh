@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { enviarMensaje, type ChatRespuesta } from "./api";
+import { enviarMensajeStream, type ChatRespuesta } from "./api";
 import Markdown from "react-markdown";
 
 type Mensaje = { autor: "empleado" | "asistente"; texto: string; detalle?: ChatRespuesta };
@@ -17,6 +17,7 @@ export default function App() {
   const [texto, setTexto] = useState("");
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pasoActual, setPasoActual] = useState<string | null>(null);
   const finRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -32,22 +33,43 @@ export default function App() {
   async function enviar(contenido: string) {
     const limpio = contenido.trim();
     if (!limpio || cargando) return;
-    setMensajes((previos) => [...previos, { autor: "empleado", texto: limpio }]);
+    // La burbuja del asistente empieza vacía y se va llenando con cada pedazo del stream
+    setMensajes((previos) => [
+      ...previos,
+      { autor: "empleado", texto: limpio },
+      { autor: "asistente", texto: "" },
+    ]);
     setTexto("");
     setError(null);
     setCargando(true);
     try {
-      const respuesta = await enviarMensaje(limpio, empleadoId, sesionId);
-      setSesionId(respuesta.sesion_id);
-      setMensajes((previos) => [
-        ...previos,
-        { autor: "asistente", texto: respuesta.respuesta, detalle: respuesta },
-      ]);
+      for await (const evento of enviarMensajeStream(limpio, empleadoId, sesionId)) {
+        if (evento.tipo === "texto") {
+          actualizarUltimo((m) => ({ ...m, texto: m.texto + evento.datos.texto }));
+        } else if (evento.tipo === "paso") {
+          setPasoActual(evento.datos.herramienta);
+        } else if (evento.tipo === "fin") {
+          setSesionId(evento.datos.sesion_id);
+          actualizarUltimo(() => ({
+            autor: "asistente",
+            texto: evento.datos.respuesta,
+            detalle: evento.datos,
+          }));
+        } else {
+          throw new Error(evento.datos.detail);
+        }
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Algo salió mal, intenta de nuevo");
+      setMensajes((previos) => (previos.at(-1)?.texto ? previos : previos.slice(0, -1)));
     } finally {
       setCargando(false);
+      setPasoActual(null);
     }
+  }
+
+  function actualizarUltimo(cambio: (ultimo: Mensaje) => Mensaje) {
+    setMensajes((previos) => [...previos.slice(0, -1), cambio(previos[previos.length - 1])]);
   }
 
   return (
@@ -98,7 +120,7 @@ export default function App() {
           )}
 
           {mensajes.map((m, i) =>
-            m.autor === "empleado" ? (
+            !m.texto ? null : m.autor === "empleado" ? (
               <p
                 key={i}
                 className="max-w-[85%] self-end whitespace-pre-wrap rounded-2xl rounded-br-sm bg-slate-900 px-4 py-2 text-sm text-white"
@@ -118,7 +140,11 @@ export default function App() {
             ),
           )}
 
-          {cargando && <p className="text-sm text-slate-400">Buscando en el reglamento…</p>}
+          {cargando && (
+            <p className="text-sm text-slate-400">
+              {pasoActual ? `Usando ${pasoActual}…` : "Pensando…"}
+            </p>
+          )}
           {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
           <div ref={finRef} />
         </div>
